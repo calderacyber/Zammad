@@ -20,9 +20,8 @@ services:
     volumes:
       - redis-data:/data
 
-  # OPTIONAL: remove this service entirely if you truly want ES disabled
   zammad-elasticsearch:
-    image: elasticsearch:8.19.11
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.11
     restart: always
     environment:
       discovery.type: single-node
@@ -40,6 +39,7 @@ services:
       - zammad-memcached
       - zammad-postgresql
       - zammad-redis
+      - zammad-elasticsearch
     environment:
       MEMCACHE_SERVERS: zammad-memcached:11211
       POSTGRESQL_DB: zammad_production
@@ -50,8 +50,14 @@ services:
       POSTGRESQL_OPTIONS: "?pool=50"
       POSTGRESQL_DB_CREATE: "true"
       REDIS_URL: redis://zammad-redis:6379
-      # If ES disabled, set false and remove ES vars + service above
-      ELASTICSEARCH_ENABLED: "false"
+
+      ELASTICSEARCH_ENABLED: "true"
+      ELASTICSEARCH_SCHEMA: "http"
+      ELASTICSEARCH_HOST: "zammad-elasticsearch"
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_NAMESPACE: "zammad"
+      ELASTICSEARCH_REINDEX: "true"
+
       TZ: America/Denver
       ZAMMAD_HTTP_TYPE: https
       ZAMMAD_FQDN: support.calderacyber.com
@@ -74,7 +80,13 @@ services:
       POSTGRESQL_PORT: "5432"
       POSTGRESQL_OPTIONS: "?pool=50"
       REDIS_URL: redis://zammad-redis:6379
-      ELASTICSEARCH_ENABLED: "false"
+
+      ELASTICSEARCH_ENABLED: "true"
+      ELASTICSEARCH_SCHEMA: "http"
+      ELASTICSEARCH_HOST: "zammad-elasticsearch"
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_NAMESPACE: "zammad"
+
       TZ: America/Denver
       ZAMMAD_HTTP_TYPE: https
       ZAMMAD_FQDN: support.calderacyber.com
@@ -97,7 +109,13 @@ services:
       POSTGRESQL_PORT: "5432"
       POSTGRESQL_OPTIONS: "?pool=50"
       REDIS_URL: redis://zammad-redis:6379
-      ELASTICSEARCH_ENABLED: "false"
+
+      ELASTICSEARCH_ENABLED: "true"
+      ELASTICSEARCH_SCHEMA: "http"
+      ELASTICSEARCH_HOST: "zammad-elasticsearch"
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_NAMESPACE: "zammad"
+
       TZ: America/Denver
     volumes:
       - zammad-storage:/opt/zammad/storage
@@ -117,7 +135,13 @@ services:
       POSTGRESQL_PORT: "5432"
       POSTGRESQL_OPTIONS: "?pool=50"
       REDIS_URL: redis://zammad-redis:6379
-      ELASTICSEARCH_ENABLED: "false"
+
+      ELASTICSEARCH_ENABLED: "true"
+      ELASTICSEARCH_SCHEMA: "http"
+      ELASTICSEARCH_HOST: "zammad-elasticsearch"
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_NAMESPACE: "zammad"
+
       TZ: America/Denver
     volumes:
       - zammad-storage:/opt/zammad/storage
@@ -131,7 +155,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # These matter for nginx entrypoint readiness
       MEMCACHE_SERVERS: zammad-memcached:11211
       POSTGRESQL_DB: zammad_production
       POSTGRESQL_HOST: zammad-postgresql
@@ -140,7 +163,12 @@ services:
       POSTGRESQL_PORT: "5432"
       POSTGRESQL_OPTIONS: "?pool=50"
       REDIS_URL: redis://zammad-redis:6379
-      ELASTICSEARCH_ENABLED: "false"
+
+      ELASTICSEARCH_ENABLED: "true"
+      ELASTICSEARCH_SCHEMA: "http"
+      ELASTICSEARCH_HOST: "zammad-elasticsearch"
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_NAMESPACE: "zammad"
 
       NGINX_PORT: "8080"
       NGINX_CLIENT_MAX_BODY_SIZE: "50m"
