@@ -1,0 +1,58 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    user: "0:0"
+    restart: unless-stopped
+
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - |
+        mkdir -p /etc/traefik
+
+        cat > /etc/traefik/dynamic.yml <<'EOF'
+        http:
+          routers:
+            support:
+              rule: "Host(`support.calderacyber.com`)"
+              entryPoints: ["websecure"]
+              tls:
+                certResolver: le
+              service: support_svc
+
+          services:
+            support_svc:
+              loadBalancer:
+                servers:
+                  - url: "http://host.docker.internal:8080"
+        EOF
+
+        exec traefik \
+          --providers.file.filename=/etc/traefik/dynamic.yml \
+          --providers.file.watch=true \
+          --entrypoints.web.address=:80 \
+          --entrypoints.websecure.address=:443 \
+          --entrypoints.web.http.redirections.entrypoint.to=websecure \
+          --entrypoints.web.http.redirections.entrypoint.scheme=https \
+          --entrypoints.web.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22 \
+          --entrypoints.websecure.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22 \
+          --certificatesresolvers.le.acme.httpchallenge=true \
+          --certificatesresolvers.le.acme.httpchallenge.entrypoint=web \
+          --certificatesresolvers.le.acme.email=rmyers@calderacyber.com \
+          --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json \
+          --accesslog=true \
+          --accesslog.format=json \ 
+          --accesslog.fields.defaultmode=keep \
+          --accesslog.fields.headers.defaultmode=keep \   
+          --log.level=INFO
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - ./letsencrypt:/letsencrypt
